@@ -15,6 +15,7 @@ const setupScreen = document.getElementById('setup-screen');
 const gameScreen = document.getElementById('game-screen');
 const charBtns = document.querySelectorAll('.char-btn');
 const startGameBtn = document.getElementById('start-game-btn');
+const stopQuestBtn = document.getElementById('stop-quest-btn');
 
 const heroNameEl = document.getElementById('hero-name');
 const heroAvatarEl = document.getElementById('hero-avatar');
@@ -29,6 +30,46 @@ const gameLogEl = document.getElementById('game-log');
 const healPromptEl = document.getElementById('heal-prompt');
 const startHealBtn = document.getElementById('start-heal-btn');
 const healProgressBar = document.getElementById('heal-progress-bar');
+
+// Stop Quest Logic
+if (stopQuestBtn) {
+  stopQuestBtn.addEventListener('click', () => {
+    // Clear game loops and intervals
+    if (gameInterval) clearInterval(gameInterval);
+    if (healInterval) clearInterval(healInterval);
+
+    gameInterval = null;
+    healInterval = null;
+    isHealing = false;
+
+    // Save state
+    if (currentHero) {
+      localStorage.setItem('neckKnightSave', JSON.stringify(currentHero));
+      logMessage(`⏸️ Quest paused! State saved.`);
+    }
+
+    // Change button visual state
+    stopQuestBtn.innerHTML = `
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span>Quest Paused</span>
+    `;
+    stopQuestBtn.className = "px-4 py-1.5 rounded-full bg-theme-textMuted/20 text-theme-textMuted border border-theme-textMuted transition-colors duration-300 font-semibold text-sm flex items-center gap-2 cursor-not-allowed";
+    stopQuestBtn.disabled = true;
+
+    // Change Arena panel sprite to "Quest Paused"
+    const arenaSpriteEl = document.getElementById('arena-sprite');
+    if (arenaSpriteEl) {
+      arenaSpriteEl.innerHTML = "⏸️";
+      arenaSpriteEl.classList.remove("animate-pulse", "hover:scale-110");
+      arenaSpriteEl.classList.add("opacity-50");
+    }
+
+    // Stop the camera via poseTracker
+    if (window.poseTracker && window.poseTracker.stopCamera) {
+      window.poseTracker.stopCamera();
+    }
+  });
+}
 
 // Setup Character Selection
 let selectedCharKey = null;
@@ -64,6 +105,9 @@ function startGame(charKey) {
   // UI Transition
   setupScreen.classList.add('hidden');
   gameScreen.classList.remove('hidden');
+  if (stopQuestBtn) {
+    stopQuestBtn.classList.remove('hidden');
+  }
 
   updateHeroUI();
   logMessage(`Welcome, brave ${currentHero.name}! Keep your back straight to explore.`);

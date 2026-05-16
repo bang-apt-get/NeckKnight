@@ -126,5 +126,17 @@ camera.start();
 // Export for game logic if needed
 window.poseTracker = {
   getCurrentPosture: () => currentPosture,
-  getLandmarks: () => landmarksData
+  getLandmarks: () => landmarksData,
+  stopCamera: () => {
+    if (camera) {
+      camera.stop();
+    }
+    if (videoElement && videoElement.srcObject) {
+      videoElement.srcObject.getTracks().forEach(track => track.stop());
+      videoElement.srcObject = null;
+    }
+    // Clear the canvas
+    canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+    poseActive = false;
+  }
 };
