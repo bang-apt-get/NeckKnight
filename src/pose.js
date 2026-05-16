@@ -9,11 +9,13 @@ let poseActive = false;
 let landmarksData = null;
 
 // Posture State
-let baselineY = null;     // The "good" Y position of the nose
+let baselineNeckRatio = null; // The "good" ratio of neck length to shoulder width
 let currentPosture = 'UNKNOWN'; // 'GOOD' or 'SLOUCHING'
 
 // Configuration
-const SLOUCH_THRESHOLD = 0.05; // Y-axis difference to trigger slouching
+// When slouching, the neck length decreases relative to shoulder width.
+// We trigger slouching if the ratio drops by this threshold.
+const SLOUCH_THRESHOLD = 0.15;
 
 function onResults(results) {
   if (!poseActive) {
@@ -38,18 +40,43 @@ function onResults(results) {
   canvasCtx.restore();
 }
 
-function analyzePosture(landmarks) {
-  // Use nose (landmark 0) to track vertical drop
+function calculateNeckRatio(landmarks) {
   const nose = landmarks[0];
+  const leftShoulder = landmarks[11];
+  const rightShoulder = landmarks[12];
 
-  if (baselineY === null) {
+  // Calculate the midpoint of the shoulders
+  const shoulderMidY = (leftShoulder.y + rightShoulder.y) / 2;
+  const shoulderMidX = (leftShoulder.x + rightShoulder.x) / 2;
+
+  // Calculate shoulder width (approximate scale of the person in the frame)
+  // Distance formula: sqrt((x2 - x1)^2 + (y2 - y1)^2)
+  const shoulderWidth = Math.sqrt(Math.pow(leftShoulder.x - rightShoulder.x, 2) + Math.pow(leftShoulder.y - rightShoulder.y, 2));
+
+  // Prevent division by zero if shoulders are not tracked well
+  if (shoulderWidth < 0.01) return 0;
+
+  // Calculate vertical distance from nose to shoulder midpoint (Neck length)
+  // Since Y increases downwards, shoulder Y > nose Y normally.
+  const neckLength = shoulderMidY - nose.y;
+
+  // Normalize the neck length by shoulder width to be invariant to distance from camera
+  return neckLength / shoulderWidth;
+}
+
+function analyzePosture(landmarks) {
+  if (baselineNeckRatio === null) {
     return; // Not calibrated
   }
 
-  // If Y increases, the head is dropping down (slouching)
-  const dropDistance = nose.y - baselineY;
+  const currentRatio = calculateNeckRatio(landmarks);
 
-  if (dropDistance > SLOUCH_THRESHOLD) {
+  // When a person slouches, their head drops closer to their shoulders,
+  // making the neck length smaller, thus decreasing the currentRatio.
+  // We compare the baseline to the current ratio.
+  const ratioDrop = baselineNeckRatio - currentRatio;
+
+  if (ratioDrop > SLOUCH_THRESHOLD) {
     setPostureStatus('SLOUCHING');
   } else {
     setPostureStatus('GOOD');
@@ -81,14 +108,14 @@ function setPostureStatus(status) {
 }
 
 function calibrate() {
-  if (!landmarksData) {
-    alert("Pose not detected yet. Please make sure you are in frame.");
+  if (!landmarksData || !landmarksData[0] || !landmarksData[11] || !landmarksData[12]) {
+    alert("Pose not fully detected yet. Please make sure your face and shoulders are in frame.");
     return;
   }
-  // Set baseline using the nose's current Y position
-  baselineY = landmarksData[0].y;
+  // Set baseline using the invariant neck-to-shoulder ratio
+  baselineNeckRatio = calculateNeckRatio(landmarksData);
   setPostureStatus('GOOD');
-  console.log("Calibrated baseline Y:", baselineY);
+  console.log("Calibrated baseline neck ratio:", baselineNeckRatio);
 }
 
 // Initialize MediaPipe Pose
@@ -141,7 +168,7 @@ window.poseTracker = {
   },
   startCamera: () => {
     // Reset baseline
-    baselineY = null;
+    baselineNeckRatio = null;
     setPostureStatus('UNKNOWN');
 
     // Show loading
