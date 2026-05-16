@@ -264,6 +264,34 @@
         </div>
       </div>
 
+      <!-- Chat Window -->
+      <div class="panel-card flex-1 flex flex-col overflow-hidden min-h-[250px]">
+        <div class="p-3 border-b border-theme-border bg-theme-panel/50 flex justify-between items-center">
+          <h2 class="text-xs font-bold tracking-widest uppercase text-theme-textMuted flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+            Tavern Chat
+          </h2>
+        </div>
+
+        <!-- Login View -->
+        <div id="chat-login-view" class="flex-1 p-4 flex flex-col items-center justify-center gap-3">
+          <p class="text-xs text-theme-textMuted text-center">Identify yourself to join the tavern chatter.</p>
+          <input type="text" id="chat-name-input" placeholder="Your Name" class="w-full bg-theme-bg border border-theme-border rounded-xl px-4 py-2 text-sm text-theme-textMain focus:outline-none focus:border-theme-accent transition-colors">
+          <button id="chat-join-btn" class="btn-primary w-full py-2 text-sm">Join Chat</button>
+        </div>
+
+        <!-- Chat View (Hidden initially) -->
+        <div id="chat-messages-view" class="flex-1 flex flex-col hidden overflow-hidden">
+          <div class="flex-1 p-3 overflow-y-auto space-y-2 text-sm" id="chat-log">
+            <div class="text-theme-textMuted text-xs text-center italic">Welcome to the tavern!</div>
+          </div>
+          <div class="p-3 border-t border-theme-border bg-theme-panel/30 flex gap-2">
+            <input type="text" id="chat-msg-input" placeholder="Type a message..." class="flex-1 bg-theme-bg border border-theme-border rounded-lg px-3 py-1.5 text-sm text-theme-textMain focus:outline-none focus:border-theme-accent transition-colors">
+            <button id="chat-send-btn" class="bg-theme-accent text-white rounded-lg px-3 py-1.5 text-sm font-semibold hover:bg-blue-500 transition-colors">Send</button>
+          </div>
+        </div>
+      </div>
+
     </section>
 
   </main>
