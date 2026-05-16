@@ -138,5 +138,18 @@ window.poseTracker = {
     // Clear the canvas
     canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
     poseActive = false;
+  },
+  startCamera: () => {
+    // Reset baseline
+    baselineY = null;
+    setPostureStatus('UNKNOWN');
+
+    // Show loading
+    cameraLoading.classList.remove('hidden');
+
+    // Restart camera instance
+    if (camera) {
+      camera.start();
+    }
   }
 };

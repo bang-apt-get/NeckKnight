@@ -16,6 +16,7 @@ const gameScreen = document.getElementById('game-screen');
 const charBtns = document.querySelectorAll('.char-btn');
 const startGameBtn = document.getElementById('start-game-btn');
 const stopQuestBtn = document.getElementById('stop-quest-btn');
+const startAgainBtn = document.getElementById('start-again-btn');
 
 const heroNameEl = document.getElementById('hero-name');
 const heroAvatarEl = document.getElementById('hero-avatar');
@@ -67,6 +68,73 @@ if (stopQuestBtn) {
     // Stop the camera via poseTracker
     if (window.poseTracker && window.poseTracker.stopCamera) {
       window.poseTracker.stopCamera();
+    }
+
+    // Show start again button
+    if (startAgainBtn) {
+      startAgainBtn.classList.remove('hidden');
+    }
+  });
+}
+
+// Start Again Logic
+if (startAgainBtn) {
+  startAgainBtn.addEventListener('click', () => {
+    // Clear saved state
+    localStorage.removeItem('neckKnightSave');
+    currentHero = null;
+    selectedCharKey = null;
+
+    // Reset UI screens
+    gameScreen.classList.add('hidden');
+    setupScreen.classList.remove('hidden');
+
+    // Reset buttons
+    startAgainBtn.classList.add('hidden');
+    stopQuestBtn.classList.add('hidden');
+
+    // Restore Stop Quest button default styling
+    stopQuestBtn.innerHTML = `
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"></path></svg>
+      <span>Stop Quest</span>
+    `;
+    stopQuestBtn.className = "hidden px-4 py-1.5 rounded-full bg-theme-danger/20 text-theme-danger border border-theme-danger hover:bg-theme-danger hover:text-white transition-colors duration-300 font-semibold text-sm flex items-center gap-2";
+    stopQuestBtn.disabled = false;
+
+    // Reset Arena Sprite styles
+    const arenaSpriteEl = document.getElementById('arena-sprite');
+    if (arenaSpriteEl) {
+      arenaSpriteEl.classList.remove("opacity-50");
+      arenaSpriteEl.classList.add("animate-pulse", "hover:scale-110");
+    }
+
+    // Reset setup screen character selection
+    charBtns.forEach(b => b.classList.remove('selected', 'border-yellow-400'));
+    startGameBtn.disabled = true;
+
+    // Clear game log
+    gameLogEl.innerHTML = `
+      <div class="text-theme-textMuted flex items-start gap-2">
+        <span class="text-theme-accent opacity-50">></span>
+        <span>Awaiting hero...</span>
+      </div>
+    `;
+
+    // Reset Heal Prompt
+    hideHealPrompt();
+    isHealing = false;
+    if (healInterval) {
+      clearInterval(healInterval);
+      healInterval = null;
+    }
+    healProgress = 0;
+    startHealBtn.disabled = false;
+    startHealBtn.textContent = 'Initiate Spell';
+    healProgressBar.style.width = '0%';
+
+    // Restart camera
+    if (window.poseTracker && window.poseTracker.startCamera) {
+      window.poseTracker.startCamera();
     }
   });
 }
