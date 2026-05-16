@@ -1,8 +1,37 @@
 /* Custom styles complementing Tailwind */
 
+/* Core Component Classes */
+.panel-card {
+  @apply bg-theme-panel rounded-2xl border border-theme-border shadow-lg;
+}
+
+.btn-primary {
+  @apply bg-theme-accent text-white font-bold py-3 px-6 rounded-xl shadow-glow transition-all duration-300 hover:bg-blue-500 hover:shadow-[0_0_20px_rgba(122,162,247,0.6)] active:scale-95;
+}
+
+.btn-success {
+  @apply bg-theme-success text-theme-bg font-bold py-3 px-6 rounded-xl shadow-glow-success transition-all duration-300 hover:bg-green-400 hover:shadow-[0_0_20px_rgba(158,206,106,0.6)] active:scale-95;
+}
+
+/* Character Selection */
 .char-btn.selected {
-  border-color: #facc15; /* yellow-400 */
-  background-color: rgba(250, 204, 21, 0.1);
+  @apply border-theme-accent bg-theme-accent/10 shadow-glow;
+}
+
+/* Animations */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.sprite-container:hover #arena-sprite {
+  animation: float 2s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) scale(1.1); }
+  50% { transform: translateY(-10px) scale(1.1); }
 }
 
 /* Make canvas flip horizontally so it acts like a mirror */
@@ -12,15 +41,14 @@
 
 /* Custom scrollbar for game log */
 #game-log::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 #game-log::-webkit-scrollbar-track {
-  background: #1f2937; /* gray-800 */
+  @apply bg-theme-bg rounded-full my-2;
 }
 #game-log::-webkit-scrollbar-thumb {
-  background: #4b5563; /* gray-600 */
-  border-radius: 4px;
+  @apply bg-theme-border rounded-full;
 }
 #game-log::-webkit-scrollbar-thumb:hover {
-  background: #6b7280; /* gray-500 */
+  @apply bg-theme-textMuted;
 }

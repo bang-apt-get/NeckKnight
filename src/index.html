@@ -4,110 +4,237 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Neck Knight - Posture RPG</title>
+
+  <!-- Tailwind CSS via CDN with custom config for the premium dark theme -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            theme: {
+              bg: '#1a1b26',       /* Deep premium dark background */
+              panel: '#24283b',    /* Lighter panel background */
+              panelHover: '#2f354d',
+              border: '#414868',   /* Subtle borders */
+              accent: '#7aa2f7',   /* Primary accent blue */
+              accentGlow: 'rgba(122, 162, 247, 0.4)',
+              success: '#9ece6a',  /* Green */
+              danger: '#f7768e',   /* Red */
+              warning: '#e0af68',  /* Yellow/Orange */
+              textMain: '#c0caf5', /* Light text */
+              textMuted: '#565f89',
+            }
+          },
+          boxShadow: {
+            'glow': '0 0 15px rgba(122, 162, 247, 0.3)',
+            'glow-success': '0 0 15px rgba(158, 206, 106, 0.3)',
+            'glow-danger': '0 0 15px rgba(247, 118, 142, 0.3)',
+          }
+        }
+      }
+    }
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-900 text-white font-sans h-screen flex flex-col">
+<body class="bg-theme-bg text-theme-textMain font-sans h-screen flex flex-col overflow-hidden selection:bg-theme-accent selection:text-theme-bg">
 
   <!-- Header -->
-  <header class="bg-gray-800 p-4 shadow-md text-center">
-    <h1 class="text-3xl font-bold text-yellow-400">Neck Knight</h1>
-    <p class="text-gray-400 text-sm mt-1">Sit straight to fight. Slouch to die.</p>
+  <header class="p-4 border-b border-theme-border flex justify-between items-center z-10 bg-theme-bg/80 backdrop-blur-md">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-full bg-theme-panel flex items-center justify-center border border-theme-border shadow-glow">
+        <span class="text-xl">🛡️</span>
+      </div>
+      <div>
+        <h1 class="text-2xl font-bold text-theme-textMain tracking-wide">Neck Knight</h1>
+        <p class="text-theme-textMuted text-xs uppercase tracking-widest font-semibold mt-0.5">Posture RPG</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-theme-panel border border-theme-border">
+      <div id="posture-status-indicator" class="w-3 h-3 rounded-full bg-theme-textMuted transition-colors duration-300"></div>
+      <span id="posture-status-text" class="text-sm font-semibold text-theme-textMuted transition-colors duration-300">Calibrating...</span>
+    </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 p-4 flex flex-col md:flex-row gap-4 overflow-hidden">
+  <!-- Main Content: 3-Column Layout -->
+  <main class="flex-1 p-4 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden max-w-[1600px] w-full mx-auto">
 
-    <!-- Left Column: Camera & Pose -->
-    <section class="flex-1 flex flex-col gap-4">
-      <div class="bg-gray-800 p-4 rounded-lg shadow-md flex-1 relative flex items-center justify-center">
+    <!-- Left Column: The Mirror (3 spans) -->
+    <section class="lg:col-span-3 flex flex-col gap-4">
+      <div class="panel-card flex-1 relative flex flex-col items-center justify-center overflow-hidden group">
+        <div class="absolute top-0 left-0 w-full p-3 z-10 bg-gradient-to-b from-theme-panel to-transparent">
+          <h2 class="text-sm font-bold tracking-widest uppercase text-theme-textMuted text-center">The Mirror</h2>
+        </div>
+
         <video class="input_video hidden"></video>
-        <canvas class="output_canvas max-w-full max-h-full rounded"></canvas>
-        <div id="camera-loading" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-10 rounded-lg">
-          <p class="text-xl animate-pulse">Loading Camera...</p>
+        <canvas class="output_canvas w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"></canvas>
+
+        <!-- Target Head Boundary Overlay -->
+        <div class="absolute inset-0 pointer-events-none flex items-center justify-center z-10">
+          <svg class="w-32 h-40 opacity-30 text-theme-accent border-boundary" viewBox="0 0 100 120" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="6 4">
+            <ellipse cx="50" cy="50" rx="35" ry="45" />
+            <path d="M 30 110 Q 50 120 70 110" />
+          </svg>
+        </div>
+
+        <div id="camera-loading" class="absolute inset-0 flex items-center justify-center bg-theme-panel/90 backdrop-blur-sm z-20 transition-opacity duration-500">
+          <div class="flex flex-col items-center gap-3">
+            <div class="w-8 h-8 border-4 border-theme-accent border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-sm text-theme-accent font-semibold tracking-wide">Connecting Vision...</p>
+          </div>
         </div>
       </div>
 
-      <div class="bg-gray-800 p-4 rounded-lg shadow-md">
-        <h2 class="text-xl font-bold mb-2">Posture Status</h2>
-        <div class="flex items-center gap-4">
-          <div id="posture-status-indicator" class="w-6 h-6 rounded-full bg-gray-500"></div>
-          <span id="posture-status-text" class="text-lg font-semibold">Calibrating...</span>
-        </div>
-        <button id="calibrate-btn" class="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded w-full transition">
-          Calibrate Posture (Sit Up Straight!)
+      <div class="panel-card shrink-0 p-4">
+        <p class="text-xs text-theme-textMuted text-center mb-3">Align your head within the dashed guide before calibrating.</p>
+        <button id="calibrate-btn" class="btn-primary w-full group relative overflow-hidden">
+          <span class="relative z-10">Calibrate Posture</span>
+          <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
         </button>
       </div>
     </section>
 
-    <!-- Right Column: Game UI -->
-    <section class="flex-1 flex flex-col gap-4">
+    <!-- Center Column: The Arena (6 spans) -->
+    <section class="lg:col-span-6 flex flex-col gap-4">
 
-      <!-- Character Selection & Setup -->
-      <div id="setup-screen" class="bg-gray-800 p-6 rounded-lg shadow-md flex-1 flex flex-col justify-center">
-        <h2 class="text-2xl font-bold mb-4 text-center">Choose Your Hero</h2>
-        <div class="grid grid-cols-3 gap-4 mb-6">
-          <button class="char-btn border-2 border-transparent hover:border-yellow-400 rounded p-2 transition focus:outline-none" data-char="knight">
-            <div class="text-4xl text-center mb-2">⚔️</div>
-            <div class="text-center font-bold">Knight</div>
+      <!-- Character Selection & Setup Overlay -->
+      <div id="setup-screen" class="panel-card flex-1 flex flex-col items-center justify-center p-8 relative overflow-hidden">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-theme-panelHover/20 via-transparent to-transparent pointer-events-none"></div>
+
+        <h2 class="text-3xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-theme-accent to-purple-400 relative z-10">Choose Your Hero</h2>
+        <p class="text-theme-textMuted mb-8 text-center max-w-md relative z-10">Select an avatar. Good posture fuels your journey. Slouching drains your vitality.</p>
+
+        <div class="grid grid-cols-3 gap-6 mb-10 w-full max-w-lg relative z-10">
+          <button class="char-btn group flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-theme-border bg-theme-panel/50 hover:bg-theme-panelHover hover:border-theme-accent transition-all duration-300 focus:outline-none" data-char="knight">
+            <div class="w-20 h-20 rounded-full bg-theme-bg flex items-center justify-center text-4xl shadow-lg group-hover:scale-110 group-hover:shadow-glow transition-all duration-300">⚔️</div>
+            <div class="font-bold tracking-wide text-theme-textMain">Knight</div>
           </button>
-          <button class="char-btn border-2 border-transparent hover:border-yellow-400 rounded p-2 transition focus:outline-none" data-char="wizard">
-            <div class="text-4xl text-center mb-2">🧙‍♂️</div>
-            <div class="text-center font-bold">Wizard</div>
+          <button class="char-btn group flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-theme-border bg-theme-panel/50 hover:bg-theme-panelHover hover:border-theme-accent transition-all duration-300 focus:outline-none" data-char="wizard">
+            <div class="w-20 h-20 rounded-full bg-theme-bg flex items-center justify-center text-4xl shadow-lg group-hover:scale-110 group-hover:shadow-glow transition-all duration-300">🧙‍♂️</div>
+            <div class="font-bold tracking-wide text-theme-textMain">Wizard</div>
           </button>
-          <button class="char-btn border-2 border-transparent hover:border-yellow-400 rounded p-2 transition focus:outline-none" data-char="slime">
-            <div class="text-4xl text-center mb-2">💧</div>
-            <div class="text-center font-bold">Pet Slime</div>
+          <button class="char-btn group flex flex-col items-center gap-3 p-4 rounded-xl border-2 border-theme-border bg-theme-panel/50 hover:bg-theme-panelHover hover:border-theme-accent transition-all duration-300 focus:outline-none" data-char="slime">
+            <div class="w-20 h-20 rounded-full bg-theme-bg flex items-center justify-center text-4xl shadow-lg group-hover:scale-110 group-hover:shadow-glow transition-all duration-300">💧</div>
+            <div class="font-bold tracking-wide text-theme-textMain">Slime</div>
           </button>
         </div>
-        <button id="start-game-btn" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded w-full transition text-lg disabled:opacity-50" disabled>
-          Start Adventure
+
+        <button id="start-game-btn" class="btn-success px-12 py-4 text-lg w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden" disabled>
+          <span class="relative z-10 flex items-center justify-center gap-2">Start Adventure <span class="group-hover:translate-x-1 transition-transform">→</span></span>
         </button>
       </div>
 
-      <!-- Game Screen (Hidden initially) -->
-      <div id="game-screen" class="bg-gray-800 p-6 rounded-lg shadow-md flex-1 flex flex-col hidden overflow-hidden">
-        <div class="flex justify-between items-end mb-4 border-b border-gray-700 pb-2">
-          <div>
-            <h2 id="hero-name" class="text-2xl font-bold text-yellow-400">Knight</h2>
-            <div class="text-3xl mt-1" id="hero-avatar">⚔️</div>
-          </div>
-          <div class="text-right">
-            <div class="text-sm text-gray-400">Level <span id="hero-level">1</span></div>
-            <div class="font-bold text-blue-400">XP: <span id="hero-xp">0</span> / <span id="hero-xp-max">100</span></div>
-          </div>
-        </div>
+      <!-- Main Game Arena -->
+      <div id="game-screen" class="panel-card flex-1 flex flex-col hidden overflow-hidden relative">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom,white,transparent)] z-0"></div>
 
-        <div class="mb-4">
-          <div class="flex justify-between text-sm mb-1">
-            <span>HP</span>
-            <span id="hero-hp-text">100 / 100</span>
-          </div>
-          <div class="w-full bg-gray-700 rounded-full h-4">
-            <div id="hero-hp-bar" class="bg-red-500 h-4 rounded-full transition-all duration-300" style="width: 100%"></div>
-          </div>
-        </div>
+        <!-- Arena Header: Stats -->
+        <div class="relative z-10 p-6 flex flex-col gap-6 h-full">
 
-        <div class="flex-1 bg-gray-900 rounded p-4 overflow-y-auto mb-4 font-mono text-sm" id="game-log">
-          <div class="text-gray-400">> Adventure begins...</div>
-        </div>
-
-        <div id="heal-prompt" class="hidden bg-yellow-900 border border-yellow-600 p-4 rounded text-center">
-          <p class="text-yellow-400 font-bold mb-2">Critically Low HP!</p>
-          <p class="text-sm mb-3">Do a 10-second neck stretch (look left, then right slowly) to cast a healing spell.</p>
-          <div class="w-full bg-gray-800 rounded-full h-2 mb-2">
-            <div id="heal-progress-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+          <!-- Character Display & Level -->
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-4">
+              <div class="relative group">
+                <div class="absolute inset-0 bg-theme-accent blur-md opacity-20 group-hover:opacity-40 transition-opacity rounded-full"></div>
+                <div class="w-16 h-16 rounded-full bg-theme-bg border-2 border-theme-border flex items-center justify-center text-3xl relative z-10" id="hero-avatar">
+                  ⚔️
+                </div>
+              </div>
+              <div>
+                <h2 id="hero-name" class="text-2xl font-bold tracking-wide text-white">Knight</h2>
+                <div class="text-xs font-bold uppercase tracking-widest text-theme-accent mt-1">Level <span id="hero-level" class="text-white ml-1">1</span></div>
+              </div>
+            </div>
           </div>
-          <button id="start-heal-btn" class="bg-green-600 hover:bg-green-500 text-white font-bold py-1 px-4 rounded text-sm">
-            Begin Stretching
-          </button>
+
+          <!-- Central Sprite Area -->
+          <div class="flex-1 flex items-center justify-center relative">
+             <div class="w-32 h-32 md:w-48 md:h-48 relative flex items-center justify-center sprite-container">
+                <!-- Abstract glowing orb representation -->
+                <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-theme-accent to-purple-500 opacity-20 blur-xl animate-pulse"></div>
+                <div id="arena-sprite" class="text-6xl md:text-8xl relative z-10 transition-transform duration-500 hover:scale-110 drop-shadow-[0_0_15px_rgba(122,162,247,0.5)]">
+                  ⚔️
+                </div>
+             </div>
+          </div>
+
+          <!-- Health & XP Bars -->
+          <div class="flex flex-col gap-4 w-full max-w-xl mx-auto">
+            <!-- Health -->
+            <div>
+              <div class="flex justify-between text-xs font-bold uppercase tracking-widest mb-1.5">
+                <span class="text-theme-danger">Vitality</span>
+                <span class="text-white" id="hero-hp-text">100 / 100</span>
+              </div>
+              <div class="w-full bg-theme-bg/80 border border-theme-border/50 rounded-full h-3 overflow-hidden shadow-inner">
+                <div id="hero-hp-bar" class="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-theme-danger to-red-400 relative overflow-hidden" style="width: 100%">
+                  <div class="absolute top-0 right-0 bottom-0 w-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Experience -->
+            <div>
+              <div class="flex justify-between text-xs font-bold uppercase tracking-widest mb-1.5">
+                <span class="text-theme-accent">Experience</span>
+                <span class="text-white"><span id="hero-xp">0</span> <span class="text-theme-textMuted mx-1">/</span> <span id="hero-xp-max">100</span></span>
+              </div>
+              <div class="w-full bg-theme-bg/80 border border-theme-border/50 rounded-full h-2 overflow-hidden shadow-inner">
+                <div id="hero-xp-bar" class="h-full rounded-full transition-all duration-500 ease-out bg-gradient-to-r from-blue-600 to-theme-accent" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
+
+    <!-- Right Column: Control Tower (3 spans) -->
+    <section class="lg:col-span-3 flex flex-col gap-4">
+
+      <!-- Heal Prompt Overlay (Hidden initially) -->
+      <div id="heal-prompt" class="panel-card bg-theme-bg border border-theme-danger shadow-glow-danger p-5 hidden flex-col items-center text-center relative overflow-hidden shrink-0">
+        <div class="absolute inset-0 bg-theme-danger/5 animate-pulse"></div>
+        <div class="w-12 h-12 rounded-full bg-theme-danger/20 flex items-center justify-center text-theme-danger mb-3 relative z-10">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+        </div>
+        <h3 class="text-theme-danger font-bold uppercase tracking-widest text-sm mb-2 relative z-10">Critical Condition</h3>
+        <p class="text-theme-textMain text-sm mb-4 relative z-10 leading-relaxed">Cast a healing spell: Turn your head slowly left, then right.</p>
+
+        <div class="w-full bg-theme-bg rounded-full h-2 mb-4 border border-theme-border relative z-10 overflow-hidden">
+          <div id="heal-progress-bar" class="bg-gradient-to-r from-theme-success to-green-400 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+
+        <button id="start-heal-btn" class="btn-success w-full text-sm py-2.5 relative z-10">
+          Initiate Spell
+        </button>
+      </div>
+
+      <!-- Battle Log -->
+      <div class="panel-card flex-1 flex flex-col overflow-hidden">
+        <div class="p-3 border-b border-theme-border bg-theme-panel/50 flex justify-between items-center">
+          <h2 class="text-xs font-bold tracking-widest uppercase text-theme-textMuted flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+            Chronicle
+          </h2>
+        </div>
+
+        <div class="flex-1 p-4 overflow-y-auto font-mono text-sm space-y-2" id="game-log">
+          <div class="text-theme-textMuted flex items-start gap-2">
+            <span class="text-theme-accent opacity-50">></span>
+            <span>Awaiting hero...</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
   </main>
 
   <script src="pose.js"></script>

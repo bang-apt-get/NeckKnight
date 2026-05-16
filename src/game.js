@@ -21,6 +21,7 @@ const heroAvatarEl = document.getElementById('hero-avatar');
 const heroLevelEl = document.getElementById('hero-level');
 const heroXpEl = document.getElementById('hero-xp');
 const heroXpMaxEl = document.getElementById('hero-xp-max');
+const heroXpBarEl = document.getElementById('hero-xp-bar');
 const heroHpTextEl = document.getElementById('hero-hp-text');
 const heroHpBarEl = document.getElementById('hero-hp-bar');
 const gameLogEl = document.getElementById('game-log');
@@ -54,6 +55,12 @@ startGameBtn.addEventListener('click', () => {
 function startGame(charKey) {
   currentHero = { ...CHARACTERS[charKey], level: 1 };
 
+  // Update the Arena sprite to match the chosen character
+  const arenaSpriteEl = document.getElementById('arena-sprite');
+  if (arenaSpriteEl) {
+    arenaSpriteEl.textContent = currentHero.emoji;
+  }
+
   // UI Transition
   setupScreen.classList.add('hidden');
   gameScreen.classList.remove('hidden');
@@ -76,16 +83,18 @@ function updateHeroUI() {
   const xpNeeded = currentHero.level * 100;
   heroXpEl.textContent = currentHero.xp;
   heroXpMaxEl.textContent = xpNeeded;
+  if (heroXpBarEl) {
+    const xpPercent = Math.min(100, (currentHero.xp / xpNeeded) * 100);
+    heroXpBarEl.style.width = `${xpPercent}%`;
+  }
 
   heroHpTextEl.textContent = `${Math.floor(currentHero.hp)} / ${currentHero.maxHp}`;
   const hpPercent = Math.max(0, (currentHero.hp / currentHero.maxHp) * 100);
   heroHpBarEl.style.width = `${hpPercent}%`;
 
   if (hpPercent < 30 && currentHero.hp > 0) {
-    heroHpBarEl.classList.replace('bg-green-500', 'bg-red-500');
     if (!isHealing) showHealPrompt();
   } else {
-    heroHpBarEl.classList.replace('bg-red-500', 'bg-green-500');
     hideHealPrompt();
   }
 }
