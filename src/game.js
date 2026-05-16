@@ -57,12 +57,9 @@ if (stopQuestBtn) {
     stopQuestBtn.className = "px-4 py-1.5 rounded-full bg-theme-textMuted/20 text-theme-textMuted border border-theme-textMuted transition-colors duration-300 font-semibold text-sm flex items-center gap-2 cursor-not-allowed";
     stopQuestBtn.disabled = true;
 
-    // Change Arena panel sprite to "Quest Paused"
-    const arenaSpriteEl = document.getElementById('arena-sprite');
-    if (arenaSpriteEl) {
-      arenaSpriteEl.innerHTML = "⏸️";
-      arenaSpriteEl.classList.remove("animate-pulse", "hover:scale-110");
-      arenaSpriteEl.classList.add("opacity-50");
+    // Clean up 3D Canvas
+    if (window.GameView3D) {
+      window.GameView3D.destroy();
     }
 
     // Stop the camera via poseTracker
@@ -100,13 +97,6 @@ if (startAgainBtn) {
     `;
     stopQuestBtn.className = "hidden px-4 py-1.5 rounded-full bg-theme-danger/20 text-theme-danger border border-theme-danger hover:bg-theme-danger hover:text-white transition-colors duration-300 font-semibold text-sm flex items-center gap-2";
     stopQuestBtn.disabled = false;
-
-    // Reset Arena Sprite styles
-    const arenaSpriteEl = document.getElementById('arena-sprite');
-    if (arenaSpriteEl) {
-      arenaSpriteEl.classList.remove("opacity-50");
-      arenaSpriteEl.classList.add("animate-pulse", "hover:scale-110");
-    }
 
     // Reset setup screen character selection
     charBtns.forEach(b => b.classList.remove('selected', 'border-yellow-400'));
@@ -164,15 +154,18 @@ startGameBtn.addEventListener('click', () => {
 function startGame(charKey) {
   currentHero = { ...CHARACTERS[charKey], level: 1 };
 
-  // Update the Arena sprite to match the chosen character
-  const arenaSpriteEl = document.getElementById('arena-sprite');
-  if (arenaSpriteEl) {
-    arenaSpriteEl.textContent = currentHero.emoji;
+  // Initialize 3D Arena
+  if (window.GameView3D) {
+    // Show screen first so container has dimensions
+    setupScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
+    window.GameView3D.init('arena-3d-container', charKey);
+  } else {
+    // UI Transition Fallback
+    setupScreen.classList.add('hidden');
+    gameScreen.classList.remove('hidden');
   }
 
-  // UI Transition
-  setupScreen.classList.add('hidden');
-  gameScreen.classList.remove('hidden');
   if (stopQuestBtn) {
     stopQuestBtn.classList.remove('hidden');
   }
@@ -252,6 +245,10 @@ function gainXp(amount) {
   currentHero.xp += amount;
   const xpNeeded = currentHero.level * 100;
 
+  if (window.GameView3D) {
+    window.GameView3D.triggerHeroAttack(`+${amount} XP`);
+  }
+
   if (currentHero.xp >= xpNeeded) {
     currentHero.xp -= xpNeeded;
     currentHero.level++;
@@ -267,6 +264,10 @@ function takeDamage(amount) {
 
   currentHero.hp -= amount;
   logMessage(`💥 Ouch! Slouching dealt ${amount} damage!`);
+
+  if (window.GameView3D) {
+    window.GameView3D.triggerEnemyAttack();
+  }
 
   if (currentHero.hp <= 0) {
     currentHero.hp = 0;
