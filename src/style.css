@@ -1,0 +1,26 @@
+/* Custom styles complementing Tailwind */
+
+.char-btn.selected {
+  border-color: #facc15; /* yellow-400 */
+  background-color: rgba(250, 204, 21, 0.1);
+}
+
+/* Make canvas flip horizontally so it acts like a mirror */
+.output_canvas {
+  transform: scaleX(-1);
+}
+
+/* Custom scrollbar for game log */
+#game-log::-webkit-scrollbar {
+  width: 8px;
+}
+#game-log::-webkit-scrollbar-track {
+  background: #1f2937; /* gray-800 */
+}
+#game-log::-webkit-scrollbar-thumb {
+  background: #4b5563; /* gray-600 */
+  border-radius: 4px;
+}
+#game-log::-webkit-scrollbar-thumb:hover {
+  background: #6b7280; /* gray-500 */
+}

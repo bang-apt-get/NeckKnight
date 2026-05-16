@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neck Knight - Posture RPG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-900 text-white font-sans h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-gray-800 p-4 shadow-md text-center">
+    <h1 class="text-3xl font-bold text-yellow-400">Neck Knight</h1>
+    <p class="text-gray-400 text-sm mt-1">Sit straight to fight. Slouch to die.</p>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-4 flex flex-col md:flex-row gap-4 overflow-hidden">
+
+    <!-- Left Column: Camera & Pose -->
+    <section class="flex-1 flex flex-col gap-4">
+      <div class="bg-gray-800 p-4 rounded-lg shadow-md flex-1 relative flex items-center justify-center">
+        <video class="input_video hidden"></video>
+        <canvas class="output_canvas max-w-full max-h-full rounded"></canvas>
+        <div id="camera-loading" class="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-10 rounded-lg">
+          <p class="text-xl animate-pulse">Loading Camera...</p>
+        </div>
+      </div>
+
+      <div class="bg-gray-800 p-4 rounded-lg shadow-md">
+        <h2 class="text-xl font-bold mb-2">Posture Status</h2>
+        <div class="flex items-center gap-4">
+          <div id="posture-status-indicator" class="w-6 h-6 rounded-full bg-gray-500"></div>
+          <span id="posture-status-text" class="text-lg font-semibold">Calibrating...</span>
+        </div>
+        <button id="calibrate-btn" class="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-4 rounded w-full transition">
+          Calibrate Posture (Sit Up Straight!)
+        </button>
+      </div>
+    </section>
+
+    <!-- Right Column: Game UI -->
+    <section class="flex-1 flex flex-col gap-4">
+
+      <!-- Character Selection & Setup -->
+      <div id="setup-screen" class="bg-gray-800 p-6 rounded-lg shadow-md flex-1 flex flex-col justify-center">
+        <h2 class="text-2xl font-bold mb-4 text-center">Choose Your Hero</h2>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+          <button class="char-btn border-2 border-transparent hover:border-yellow-400 rounded p-2 transition focus:outline-none" data-char="knight">
+            <div class="text-4xl text-center mb-2">⚔️</div>
+            <div class="text-center font-bold">Knight</div>
+          </button>
+          <button class="char-btn border-2 border-transparent hover:border-yellow-400 rounded p-2 transition focus:outline-none" data-char="wizard">
+            <div class="text-4xl text-center mb-2">🧙‍♂️</div>
+            <div class="text-center font-bold">Wizard</div>
+          </button>
+          <button class="char-btn border-2 border-transparent hover:border-yellow-400 rounded p-2 transition focus:outline-none" data-char="slime">
+            <div class="text-4xl text-center mb-2">💧</div>
+            <div class="text-center font-bold">Pet Slime</div>
+          </button>
+        </div>
+        <button id="start-game-btn" class="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded w-full transition text-lg disabled:opacity-50" disabled>
+          Start Adventure
+        </button>
+      </div>
+
+      <!-- Game Screen (Hidden initially) -->
+      <div id="game-screen" class="bg-gray-800 p-6 rounded-lg shadow-md flex-1 flex-col hidden">
+        <div class="flex justify-between items-end mb-4 border-b border-gray-700 pb-2">
+          <div>
+            <h2 id="hero-name" class="text-2xl font-bold text-yellow-400">Knight</h2>
+            <div class="text-3xl mt-1" id="hero-avatar">⚔️</div>
+          </div>
+          <div class="text-right">
+            <div class="text-sm text-gray-400">Level <span id="hero-level">1</span></div>
+            <div class="font-bold text-blue-400">XP: <span id="hero-xp">0</span> / <span id="hero-xp-max">100</span></div>
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <div class="flex justify-between text-sm mb-1">
+            <span>HP</span>
+            <span id="hero-hp-text">100 / 100</span>
+          </div>
+          <div class="w-full bg-gray-700 rounded-full h-4">
+            <div id="hero-hp-bar" class="bg-red-500 h-4 rounded-full transition-all duration-300" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <div class="flex-1 bg-gray-900 rounded p-4 overflow-y-auto mb-4 font-mono text-sm" id="game-log">
+          <div class="text-gray-400">> Adventure begins...</div>
+        </div>
+
+        <div id="heal-prompt" class="hidden bg-yellow-900 border border-yellow-600 p-4 rounded text-center">
+          <p class="text-yellow-400 font-bold mb-2">Critically Low HP!</p>
+          <p class="text-sm mb-3">Do a 10-second neck stretch (look left, then right slowly) to cast a healing spell.</p>
+          <div class="w-full bg-gray-800 rounded-full h-2 mb-2">
+            <div id="heal-progress-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+          </div>
+          <button id="start-heal-btn" class="bg-green-600 hover:bg-green-500 text-white font-bold py-1 px-4 rounded text-sm">
+            Begin Stretching
+          </button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="pose.js"></script>
+  <script src="game.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
