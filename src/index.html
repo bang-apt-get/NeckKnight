@@ -188,13 +188,13 @@
             </div>
           </div>
 
-          <!-- Central Sprite Area -->
+          <!-- Central 3D Canvas Area -->
           <div class="flex-1 flex items-center justify-center relative">
-             <div class="w-32 h-32 md:w-48 md:h-48 relative flex items-center justify-center sprite-container">
-                <!-- Abstract glowing orb representation -->
-                <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-theme-accent to-purple-500 opacity-20 blur-xl animate-pulse"></div>
-                <div id="arena-sprite" class="text-6xl md:text-8xl relative z-10 transition-transform duration-500 hover:scale-110 drop-shadow-[0_0_15px_rgba(122,162,247,0.5)]">
-                  ⚔️
+             <div class="w-full h-full relative flex items-center justify-center">
+                <!-- Abstract glowing orb representation behind canvas -->
+                <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-theme-accent to-purple-500 opacity-20 blur-xl animate-pulse w-32 h-32 md:w-48 md:h-48 mx-auto self-center"></div>
+                <div id="arena-3d-container" class="w-full h-full relative z-10">
+                  <!-- Three.js Canvas will be appended here -->
                 </div>
              </div>
           </div>
@@ -290,8 +290,12 @@
   <!-- Ethers.js for Web3 integration -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.0/ethers.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
+  <!-- Three.js for 3D graphics -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
   <script src="pose.js"></script>
   <script src="blockchain.js"></script>
+  <script src="gameView3D.js"></script>
   <script src="game.js"></script>
   <script src="script.js"></script>
 </body>
